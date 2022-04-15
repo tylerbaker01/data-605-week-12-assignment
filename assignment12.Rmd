@@ -1,0 +1,137 @@
+---
+title: "data 605 assignment 12"
+author: "Tyler Baker"
+date: "4/14/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+# Week 12 Assignment
+## Multi-Factor Regression
+### Tyler Baker
+
+## Assignment Description
+Can be found here:
+https://github.com/tylerbaker01/data-605-week-12-assignment/blob/main/Assignment%20Description
+
+## Data
+```{r}
+who_data <- read.csv("https://raw.githubusercontent.com/tylerbaker01/data-605-week-12-assignment/main/who.csv")
+```
+
+## Question 1
+Provide a scatterplot of LifeExp~TotExp, and run simple linear regression. Do not transform the
+variables. Provide and interpret the F statistics, R^2, standard error,and p-values only. Discuss
+whether the assumptions of simple linear regression met.
+```{r}
+q_one.lm <- lm(LifeExp ~ TotExp, data=who_data)
+with(who_data, plot(LifeExp, TotExp))
+abline(q_one.lm)
+```
+From looking at the plot, the model does not seem to fit the data but let's look at the summary statistics still.
+```{r}
+summary(q_one.lm)
+```
+### The F-Statistic
+The F-statistic provides a way to globally test if any of the independent variables is related to the dependent variable.
+If the p-value associated with the F-Statistic is >= 0.05 then we can say with 95% confidence that the dependent variable is not dependent on the given independent variables.
+In our case, we have a p-value much smaller tham 0.05. Thus, we  can conclude that TotExp does have an relationship with LifeExp.
+### R^2
+The R^2 is very low, both are about 25%. This means that about 25% of the predictions acount for observational data. Although we have a low R^2, this does not neccessarily mean that we have a bad model. We should look at the residuals plot.
+```{r}
+plot(fitted(q_one.lm), resid(q_one.lm))
+```
+From looking at this we see that the residuals are not equally spread out. This is a good indicator that our model is not strong.
+### Standard Errors
+The standard error should be about 5-10 times smaller than the cooresponding coefficient. In this case ours is about 86 times smaller. Again, this is not a good indicator.
+### Conclusion
+While we can say that TotExp does have a role in the outcome of LifeExp, we can say that it is not a linear relationship. From looking at the scatterplot, we  should note that there was an almost exponential relationship.
+## Question 2
+2. Raise life expectancy to the 4.6 power (i.e., LifeExp^4.6). Raise total expenditures to the 0.06
+power (nearly a log transform, TotExp^.06). Plot LifeExp^4.6 as a function of TotExp^.06, and r
+re-run the simple regression model using the transformed variables. Provide and interpret the F
+statistics, R^2, standard error, and p-values. Which model is "better?"
+### Setting Up the Data
+```{r}
+who_data_two <- who_data
+who_data_two$LifeExp <- who_data_two$LifeExp ^4.6
+who_data_two$TotExp <- who_data_two$TotExp^.06
+```
+### Rerunning the Regression
+```{r}
+q_two.lm <- lm(LifeExp ~ TotExp, data=who_data_two)
+with(who_data_two, plot(LifeExp, TotExp))
+abline(q_two.lm)
+```
+From the plot alone, this appears that it will lead to a better model. Let's find out.
+```{r}
+summary(q_two.lm)
+```
+### F-Statistic
+Well, the cooresponding p-value shows that there is a strong relationship between the two variables.
+### R^2
+The R^2 is much better in this model. This model is account for almost 73% of observational data. However, we must again check the plot.
+```{r}
+plot(fitted(q_two.lm), resid(q_two.lm))
+```
+This appears to be in much better shape then the previous model. Our residuals seem to be pretty equally spread out across 0.
+### Standard Errors
+I do not know how to interpret a negative t-value.
+### Conclusion
+The second version is "better" model. However, we have changed the data in a way that makes interpretation very difficult. What does a life expectancy raised to the power of 4.6 mean exactly? Life expectancy in United States is about 77 years. So how do we interpret 77^4.6 years old?
+## Question 3
+Using the results from 2, forecast life expectancy when TotExp^.06 =1.5. Then forecast life
+expectancy when TotExp^.06=2.5. 
+```{r}
+coef(q_two.lm)
+```
+So we will calculate using y=mx+b, where m and b are the coefficients.
+```{r}
+a <- -736527909 + 620060216*1.5
+print(a)
+b <- -736527909 + 620060216*2.5
+print(b)
+```
+Again, I do not know how we can interpret this information.
+## Question 4
+4. Build the following multiple regression model and interpret the F Statistics, R^2, standard error,
+and p-values. How good is the model?
+LifeExp = b0+b1 x PropMd + b2 x TotExp +b3 x PropMD x TotExp
+### Multi-Factor Regression
+```{r}
+who_data$value <- who_data$PropMD *who_data$TotExp
+q_four.lm <- lm(LifeExp ~ value + TotExp + PropMD, data=who_data)
+```
+Now let's look at the summary statistics.
+```{r}
+summary(q_four.lm)
+```
+### F-Statistic
+The p-value corresponding to the F-statistic is again very small. Which is saying that we're over 99% confident that the independent variables have an impact on the dependent variables.
+### R^2
+The R^2 is low. Which means that our model only accounts for about 36% of the observations. A low R^2 doesn't necessarily mean that it is a bad model.
+```{r}
+plot(fitted(q_four.lm), resid(q_four.lm))
+```
+Viewing this plot it is hard to be sure that the residuals are spread out equally across 0, but they very well could be.
+### Standard Errors
+I'm not sure how to interpret standard errors on the coefficients.
+The significance code shows that they are all as significant as possible.
+### Conclusion
+I do not think our model is "good" because the residuals don't seem to follow a nearly normal distribution. I know that our choice of independent variables is good but I imagine the points follow a different distribution than what are model is providing.
+## Question 5
+ Forecast LifeExp when PropMD=.03 and TotExp = 14. Does this forecast seem realistic? Why
+or why not?
+```{r}
+coef(q_four.lm)
+```
+We will note y= 6.277270e+01 + -6.025686e-03(value) + 7.233324e-05(TotExp) + 1.497494e+03(PropMD)
+```{r}
+y<- 62.77270 + (-0.06025686*(.42)) + .00007233324*(14) + 1497.494*(.03)
+print(y)
+```
+This is saying that the average life expectancy would be 107. This doesn't seem correct. However, if we can really trust our model then it is saying something pretty remarkable. Simply increasing the percent of doctors has a large impact on life expectancy.
